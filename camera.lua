@@ -2,7 +2,7 @@ local camera = {}
 camera.x = 0
 camera.y = 0
 camera.acc = 0
-camera.scale = 1
+camera.scale = 10
 
 function camera:scale_around(alpha, x, y)
   local dx = x*self.scale*(1-alpha)
@@ -20,21 +20,20 @@ function camera:move_pixels(pdx, pdy)
 end
 
 function camera:draw(objects)
+  love.graphics.push()
+  love.graphics.scale(1/self.scale, 1/self.scale)
   for _, square in pairs(objects) do
-    local px = (square.x - self.x)/self.scale
-    local py = (square.y - self.y)/self.scale
-    local pxsize = square.xsize/self.scale
-    local pysize = square.ysize/self.scale
-    love.graphics.push()
-    -- love.graphics.scale(1/self.scale, 1/self.scale)
-    if px < self.pix_w and py < self.pix_h and px + pxsize >= 0 and py + pysize >= 0 then
-      square:draw(px, py, self.scale)
-      -- print('i love being drawn')
-      -- love.graphics.rectangle("fill", px, py, pxsize, pysize)
-    end
-    love.graphics.pop()
+    local dx = (square.x - self.x)
+    local dy = (square.y - self.y)
+    local pxsize = square.xsize
+    local pysize = square.ysize
+
+    -- if px < self.pix_w and py < self.pix_h and px + pxsize >= 0 and py + pysize >= 0 then
+    square:draw(dx, dy, self.scale)
+    -- love.graphics.rectangle("fill", px, py, pxsize, pysize)
+    -- end
   end
-  print('all done drawing')
+  love.graphics.pop()
 end
 
 return camera

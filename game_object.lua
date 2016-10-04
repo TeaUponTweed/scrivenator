@@ -9,7 +9,7 @@ end
 
 function GameObject:draw(px, py, scale)
       love.graphics.draw(self.sprite.body, px, py)
-      love.graphics.draw(self.sprite.hand, px + self.sprite.relx/scale, py + self.sprite.rely/scale)
+      love.graphics.draw(self.sprite.hand, px + self.sprite.relx, py + self.sprite.rely)
 end
 
 return GameObject

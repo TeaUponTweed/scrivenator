@@ -16,13 +16,6 @@ function love.update(dt)
 end
 
 function love.draw()
-
-   -- love.graphics.push()
-   -- love.graphics.scale(0.5, 0.5)   -- reduce everything by 50% in both X and Y coordinates
-   -- love.graphics.print("Scaled text", 50, 50)
-   -- love.graphics.pop()
-   -- love.graphics.print("Normal text", 50, 50)
-
 	camera:draw(allObjects)
     love.graphics.print(camera.x, 10, 10)
     love.graphics.print(camera.y, 10, 30)
@@ -33,7 +26,7 @@ function love.mousepressed(px, py, button, istouch)
    if button == 2 then
         obj = GameObject:new({x=px*camera.scale + camera.x,
                               y=py*camera.scale + camera.y,
-                              sprite=Sprite:from_paths("assets/circle.png", "assets/spear.png", 10, 50),
+                              sprite=Sprite:from_paths("assets/circle.png", "assets/spear.png", 150, -250),
                               xsize=10,
                               ysize=10})
    		allObjects[#allObjects+1] = obj
