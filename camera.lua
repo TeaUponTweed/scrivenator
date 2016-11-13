@@ -2,7 +2,7 @@ local camera = {}
 camera.x = 0
 camera.y = 0
 camera.acc = 0
-camera.scale = 10
+camera.scale = 1
 
 function camera:scale_around(alpha, x, y)
   local dx = x*self.scale*(1-alpha)
@@ -19,21 +19,8 @@ function camera:move_pixels(pdx, pdy)
   self.y = self.y + dy
 end
 
-function camera:draw(objects)
-  love.graphics.push()
-  love.graphics.scale(1/self.scale, 1/self.scale)
-  for _, square in pairs(objects) do
-    local dx = (square.x - self.x)
-    local dy = (square.y - self.y)
-    local pxsize = square.xsize
-    local pysize = square.ysize
-
-    -- if px < self.pix_w and py < self.pix_h and px + pxsize >= 0 and py + pysize >= 0 then
-    square:draw(dx, dy, self.scale)
-    -- love.graphics.rectangle("fill", px, py, pxsize, pysize)
-    -- end
-  end
-  love.graphics.pop()
+function camera:abs(px, py)
+    return {px*self.scale + self.x, py*self.scale + self.y}
 end
 
 return camera
