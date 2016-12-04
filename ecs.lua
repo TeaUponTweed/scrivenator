@@ -42,43 +42,28 @@ function ecs:add_component(name, args, id)
 end
 
 function ecs:process(component_names, func)
-    if type(component_names) == "string" then
-        local component_name
-        component_name = component_names
-        assert(self.components[component_name], "no compontent " .. component_name)
-        for id, component in ipairs(self.components[component_name]) do
-            local ret
-            ret = func(component)
-            if ret == self.NONE then
-                self.components[id] = nil
-            elseif ret then
-                self.components[id] = ret
+    assert(type(component_names) == "table", "need table of components")
+    for id, _ in ipairs(self.entities) do
+        for _, component_name in ipairs(component_names) do
+            assert(self.components[component_name], "unkown component " .. component_name)
+            if not self.components[component_name][id] then
+                goto continue
             end
         end
-    else
-        assert(type(component_names) == "table", "need table of components")
-        for id, _ in ipairs(self.entities) do
-            for _, component_name in ipairs(component_names) do
-                assert(self.components[component_name], "unkown component " .. component_name)
-                if not self.components[component_name][id] then
-                    goto continue
-                end
-            end
-            local args
-            args = {}
-            for i=1,#component_names do
-                args[i] = self.components[component_names[i]][id]
-            end
-            local ret = func(unpack(args))
-            if ret == ecs.KILL then
-                ecs.tokill[#ecs.tokill+1] = id
-            elseif ret == ecs.REMOVE_COMPONENT:
-                self.components[component_name][id] = nil
-            elseif ret then
-                self.components[component_name][id] = ret
-            end
-            ::continue::
+        local args
+        args = {}
+        for i=1,#component_names do
+            args[i] = self.components[component_names[i]][id]
         end
+        local ret = func(unpack(args))
+        if ret == ecs.KILL then
+            ecs.tokill[#ecs.tokill+1] = id
+        elseif ret == ecs.REMOVE_COMPONENT:
+            self.components[component_name][id] = nil
+        elseif ret then
+            self.components[component_name][id] = ret
+        end
+        ::continue::
     end
 end
 
