@@ -1,9 +1,14 @@
 local ecs = {}
+
 ecs.NONE = {}
+ecs.KILL = {}
+ecs.REMOVE_COMPONENT = {}
 ecs.entity_num = 0
 ecs.components_constructors = {}
 ecs.components = {}
 ecs.entities = {}
+ecs.tokill ={}
+
 
 function ecs:with(name, args, id)
     id = id or self.entity_num
@@ -54,6 +59,7 @@ function ecs:process(component_names, func)
         assert(type(component_names) == "table", "need table of components")
         for id, _ in ipairs(self.entities) do
             for _, component_name in ipairs(component_names) do
+                assert(self.components[component_name], "unkown component " .. component_name)
                 if not self.components[component_name][id] then
                     goto continue
                 end
@@ -64,10 +70,12 @@ function ecs:process(component_names, func)
                 args[i] = self.components[component_names[i]][id]
             end
             local ret = func(unpack(args))
-            if ret == NONE then
-                self.components[id] = nil
+            if ret == ecs.KILL then
+                ecs.tokill[#ecs.tokill+1] = id
+            elseif ret == ecs.REMOVE_COMPONENT:
+                self.components[component_name][id] = nil
             elseif ret then
-                self.components[id] = ret
+                self.components[component_name][id] = ret
             end
             ::continue::
         end
