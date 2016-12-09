@@ -12,7 +12,7 @@ ecs.tokill ={}
 
 function ecs:with(name, args, id)
     id = id or self.entity_num
-    self.components[name][self.entity_num] = self.components_constructors[name](unpack(args))
+    self.components[name][id] = self.components_constructors[name](unpack(args))
     return self
 end
 
@@ -37,13 +37,13 @@ end
 function ecs:add_component(name, args, id)
     assert(id, "need id")
     assert(self.entities[id], "unkown id " .. id)
-    assert(not self.components[name][id], component .. " already present for " .. id)
+    assert(not self.components[name][id], name .. " already present for " .. id)
     self:with(name, args, id)
 end
 
 function ecs:process(component_names, func)
     assert(type(component_names) == "table", "need table of components")
-    for id, _ in ipairs(self.entities) do
+    for id, _ in ipairs(self.entities) do -- TODO find itersection of all relevent ids from a component perpective and iterate through that
         for _, component_name in ipairs(component_names) do
             assert(self.components[component_name], "unkown component " .. component_name)
             if not self.components[component_name][id] then
@@ -58,13 +58,12 @@ function ecs:process(component_names, func)
         local ret = func(unpack(args))
         if ret == ecs.KILL then
             ecs.tokill[#ecs.tokill+1] = id
-        elseif ret == ecs.REMOVE_COMPONENT:
-            self.components[component_name][id] = nil
-        elseif ret then
-            self.components[component_name][id] = ret
         end
         ::continue::
     end
 end
-
+-- Add ability to get entity as object with all components
+-- add optimized estity selection
+-- use kd tree
+-- implement simple ai for animals
 return ecs

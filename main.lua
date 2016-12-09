@@ -4,11 +4,9 @@ local camera = require("camera")
 local ecs = require("ecs")
 -- local kdtree = require("kdtree")
 
-local entities = {}
-local positions = {}
-
 
 function love.load()
+  love.window.setMode(0, 0, {resizable=true})
 	love.graphics.setBackgroundColor(54, 172, 248)
     -- TODO window resize
 	camera.pix_w = love.graphics.getWidth()
@@ -30,7 +28,7 @@ function love.load()
                           return v
                       end )
     ecs:new_component('plant_food',
-                      function(grow_time, maxfood)
+                      function(growtime, maxfood)
                         local pf = {}
                         pf._growtime = growtime
                         pf._maxfood = maxfood
@@ -69,7 +67,7 @@ function love.update(dt)
                 end)
 end
 
-function love.draw()
+function love.draw() -- TODO use kd tree to find visible objects, requires ecs extension based on position
     love.graphics.push()
     love.graphics.scale(1.0/camera.scale, 1.0/camera.scale)
     love.graphics.translate(-camera.x, -camera.y)
@@ -85,6 +83,7 @@ end
 function love.mousepressed(px, py, button, istouch)
     -- TODO serialize input
     if button == 2 then
+      for _=1,2000 do
         local isbear = love.math.random() <= .2
         local draw_func = function(x, y)
                             if isbear then
@@ -97,6 +96,7 @@ function love.mousepressed(px, py, button, istouch)
         ecs:new_entity():with('position', {unpack(camera:abs(px, py))}):
                          with('velocity', {20*(love.math.random()-.5), 20*(love.math.random()-.5)}):
                          with('drawer', {draw_func})
+     end
    end
 end
 
@@ -122,4 +122,10 @@ function love.keypressed(k)
    if k == 'escape' then
       love.event.quit()
    end
+end
+
+
+function love.resize(w, h)
+  camera.pix_w = w
+  camera.pix_h = h
 end
