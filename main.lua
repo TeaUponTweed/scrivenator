@@ -6,12 +6,13 @@ local vec = require("vector")
 -- local kdtree = require("kdtree")
 local QuadTree = require("quadtree")
 
-min = math.min
-max = math.max
-MAX_SPEED = 20
+local min = math.min
+local max = math.max
+local MAX_SPEED = 20
 
 function love.load()
-  love.window.setMode(0, 0, {resizable=true})
+
+    love.window.setMode(0, 0, {resizable=true})
 	love.graphics.setBackgroundColor(54, 172, 248)
     -- TODO window resize
 	camera.pix_w = love.graphics.getWidth()
@@ -55,10 +56,18 @@ function love.load()
                         d.draw = drawfunc
                         return d
                       end )
+    qtree = QuadTree.new(-1000000, -1000000, 2000000, 2000000)
+
  end
 
 
 function love.update(dt)
+    qtree = QuadTree.new(-1000000, -1000000, 2000000, 2000000)
+    ecs:process({'position'},
+                function (p)
+                    qtree:add(p)
+                end)
+
     ecs:process({'position', 'velocity'},
                 function (p, v)
                     p.x = p.x + v.vx * dt
@@ -75,11 +84,6 @@ function love.update(dt)
 end
 
 function love.draw()
-    local function my_bounds(o, min, max)
-        min[1], min[2] = o.x, o.y
-        max[1], max[2] = o.x+10, o.y+10
-        return min, max
-    end
 
     love.graphics.push()
     love.graphics.scale(1.0/camera.scale, 1.0/camera.scale)
@@ -97,14 +101,22 @@ function love.draw()
                         if selected and love.mouse.isDown(1) then
                             love.graphics.push()
                             love.graphics.setColor(255, 0, 0)
-                            love.graphics.rectangle("fill", p.x-2, p.y-2, 14, 14)
+                            love.graphics.rectangle("line", p.x-2, p.y-2, 14, 14)
                             love.graphics.pop()
                         end
                     end
                     d.draw(p.x, p.y)
                 end )
+
+    qtree:applyToLeaf(
+        function (qt)
+            love.graphics.setColor(0, 0, 0)
+            love.graphics.rectangle("line", qt.x, qt.y, qt.w, qt.h)
+        end)
+
     love.graphics.pop()
     love.graphics.print(tostring(love.timer.getFPS( )), 10, 10)
+
 end
 
 MOUSE_1_DOWN = {0, 0}
@@ -156,11 +168,11 @@ function love.keypressed(k)
                             love.graphics.rectangle("fill", x, y, 10, 10)
                             love.graphics.pop()
                     end
-        dir = love.math.random() * 2 * math.pi
-        speed = love.math.random() * 0
-        vx = speed*math.cos(dir)
-        vy = speed*math.sin(dir)
-        px, py = unpack(camera:abs(mousex, mousey))
+        local dir = love.math.random() * 2 * math.pi
+        local speed = love.math.random() * 300
+        local vx = speed*math.cos(dir)
+        local vy = speed*math.sin(dir)
+        local px, py = unpack(camera:abs(mousex, mousey))
         px = px + (love.math.random()-.5)*200
         py = py + (love.math.random()-.5)*200
         ecs:new_entity():with('position', {px, py}):
