@@ -72,6 +72,18 @@ function love.update(dt)
                 function (p, v)
                     p.x = p.x + v.vx * dt
                     p.y = p.y + v.vy * dt
+                    for _, otherp in pairs(qtree:getIn({x=p.x-10, y=p.y-10, w=30, h=30})) do
+                        local dx = p.x - otherp.x
+                        local dy = p.y - otherp.y
+                        local distance = math.sqrt(dx*dx + dy*dy)
+                        if p ~= otherp and distance < 10 then
+                            v.vx = -v.vx
+                            v.vy = -v.vy
+                            p.x = otherp.x + (10/distance * dx)
+                            p.y = otherp.y + (10/distance * dy)
+                            break
+                        end
+                    end
                 end)
 
     ecs:process({'vitality'},
@@ -88,23 +100,23 @@ function love.draw()
     love.graphics.push()
     love.graphics.scale(1.0/camera.scale, 1.0/camera.scale)
     love.graphics.translate(-camera.x, -camera.y)
+    if MOUSE_1_BOX and MOUSE_1_DOWN and love.mouse.isDown(1) then
+        local absd = camera:abs(unpack(MOUSE_1_DOWN))
+        local absb = camera:abs(unpack(MOUSE_1_BOX))
+        x = min(absd[1], absb[1])
+        y = min(absd[2], absb[2])
+        w = math.abs(absd[1] - absb[1])
+        h = math.abs(absd[2] - absb[2])
+        for _, p in pairs(qtree:getIn({x=x, y=y, w=w, h=h})) do
+            love.graphics.push()
+            love.graphics.setColor(255, 0, 0)
+            love.graphics.rectangle("line", p.x-2, p.y-2, 14, 14)
+            love.graphics.pop()
+        end
+    end
+
     ecs:process({'position', 'drawer'},
                 function (p, d)
-                    if MOUSE_1_BOX and MOUSE_1_DOWN then
-                        local absd = camera:abs(unpack(MOUSE_1_DOWN))
-                        local absb = camera:abs(unpack(MOUSE_1_BOX))
-                        local t, r, b, l = min(absd[2], absb[2]), max(absd[1], absb[1]), max(absd[2], absb[2]), min(absd[1], absb[1])
-                        selected = (l <= p.x and
-                                    t <= p.y and
-                                    r >= p.x and
-                                    b >= p.y)
-                        if selected and love.mouse.isDown(1) then
-                            love.graphics.push()
-                            love.graphics.setColor(255, 0, 0)
-                            love.graphics.rectangle("line", p.x-2, p.y-2, 14, 14)
-                            love.graphics.pop()
-                        end
-                    end
                     d.draw(p.x, p.y)
                 end )
 
@@ -169,7 +181,7 @@ function love.keypressed(k)
                             love.graphics.pop()
                     end
         local dir = love.math.random() * 2 * math.pi
-        local speed = love.math.random() * 300
+        local speed = love.math.random() * 200
         local vx = speed*math.cos(dir)
         local vy = speed*math.sin(dir)
         local px, py = unpack(camera:abs(mousex, mousey))
@@ -180,6 +192,7 @@ function love.keypressed(k)
                          with('drawer', {draw_func})
      end
    end
+    print(ecs.entity_num)
 end
 
 
