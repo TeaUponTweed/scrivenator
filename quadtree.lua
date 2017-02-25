@@ -12,6 +12,7 @@ function QuadTree.new(left, top, width, height)
     self.h = height
     self.children = nil
     self.objects = {}
+    self.nobjects = 0
     return self
 end
 
@@ -24,6 +25,24 @@ function QuadTree:intersects(qt)
             self:contains(qt.x + qt.w, qt.y        ) or
             self:contains(qt.x       , qt.y + qt.h ) or
             self:contains(qt.x + qt.w, qt.y + qt.h ) )
+end
+
+function QuadTree:relevantChild(x, y)
+    assert(x >= self.x and self.x + self.width > x)
+    assert(y >= self.y and self.y + self.height > y)
+    local left  =  (x < self.x + self.width/2)
+    local right = not left
+    local upper =  (y < self.y + self.height/2)
+    local lower = not upper
+    if upper and left then
+        return 1
+    elseif upper and right then
+        return 2
+    elseif lower and left then
+        return 3
+    elseif lower and right then
+        return 4
+    end
 end
 
 function QuadTree:subdivide()
@@ -44,6 +63,7 @@ function QuadTree:subdivide()
         }
         local objects = self.objects
         self.objects = nil
+        self.nobjects = 0
         for _, o in pairs(objects) do
             self:add(o)
         end
@@ -69,9 +89,11 @@ function QuadTree:add(o)
         function (qt)
             if qt:contains(o.x, o.y) then
                 -- print('ere')
-                qt.objects[#qt.objects+1] = o
+                assert(not qt.objects[o], "cant add same object to quadtree twice")
+                qt.objects[o] = o
+                qt.nobjects = qt.nobjects + 1
                 -- print(#qt.objects)
-                if #qt.objects > QuadTree.MAX_OBJECTS then
+                if qt.nobjects > QuadTree.MAX_OBJECTS then
                     qt:subdivide()
                 end
             end
@@ -81,7 +103,10 @@ end
 function QuadTree:remove(o) -- TODO collapse tree as objects are removed?
     self:applyToLeaf(
         function (qt)
-            qt.objects[o] = nil
+            if (qt.objects[o]) then
+                qt.objects[o] = nil
+                qt.nobjects = qt.nobjects - 1
+            end
         end)
 end
 
