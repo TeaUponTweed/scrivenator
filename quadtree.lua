@@ -2,7 +2,7 @@ local QuadTree = {}
 
 QuadTree.__index = QuadTree
 
-QuadTree.MAX_OBJECTS=5
+QuadTree.MAX_OBJECTS = 15
 
 function QuadTree.new(left, top, width, height)
     local self = setmetatable({}, QuadTree)
@@ -16,8 +16,12 @@ function QuadTree.new(left, top, width, height)
     return self
 end
 
+function _contains(r, x, y)
+    return (x >= r.x and r.x + r.w > x) and (y >= r.y and r.y + r.h > y)
+end
+
 function QuadTree:contains(x, y)
-    return (x >= self.x and self.x + self.w > x) and (y >= self.y and self.y + self.h > y)
+    return _contains(self, x, y)
 end
 
 function QuadTree:intersects(qt)
@@ -28,11 +32,11 @@ function QuadTree:intersects(qt)
 end
 
 function QuadTree:relevantChild(x, y)
-    assert(x >= self.x and self.x + self.width > x)
-    assert(y >= self.y and self.y + self.height > y)
-    local left  =  (x < self.x + self.width/2)
+    assert(x >= self.x and self.x + self.w > x)
+    assert(y >= self.y and self.y + self.h > y)
+    local left  =  (x < self.x + self.w/2)
     local right = not left
-    local upper =  (y < self.y + self.height/2)
+    local upper =  (y < self.y + self.h/2)
     local lower = not upper
     if upper and left then
         return 1
@@ -83,48 +87,52 @@ function QuadTree:applyToLeaf(func)
 end
 
 
-function QuadTree:add(o)
-    -- assert(contains(self, o.x, o.y), self.x .. " " .. self.y .. " " .. self.w .. " " .. self.h)
-    self:applyToLeaf(
-        function (qt)
-            if qt:contains(o.x, o.y) then
-                -- print('ere')
-                assert(not qt.objects[o], "cant add same object to quadtree twice")
-                qt.objects[o] = o
-                qt.nobjects = qt.nobjects + 1
-                -- print(#qt.objects)
-                if qt.nobjects > QuadTree.MAX_OBJECTS then
-                    qt:subdivide()
-                end
+function QuadTree:add(o) -- TODO bead 30 fps @ 660 enitities
+    assert(self:contains(o.x, o.y), self.x .. " " .. self.y .. " " .. self.w .. " " .. self.h)
+    if self.children then
+        assert(not self.objects)
+        self.children[self:relevantChild(o.x, o.y)]:add(o)
+    else
+        assert(not self.children)
+        assert(not self.objects[o], "cant add same object to quadtree twice")
+        self.objects[o] = o
+        self.nobjects = self.nobjects + 1
+        if self.nobjects > QuadTree.MAX_OBJECTS then
+            self:subdivide()
+        end
+    end
+end
+
+-- function QuadTree:remove(o) -- TODO collapse tree as objects are removed?
+--     self:applyToLeaf(
+--         function (qt)
+--             if (qt.objects[o]) then
+--                 qt.objects[o] = nil
+--                 qt.nobjects = qt.nobjects - 1
+--             end
+--         end)
+-- end
+
+-- function QuadTree:update(o)
+--     self:remove(o)
+--     self:add(o)
+-- end
+
+function QuadTree:getIn(r, ret)
+    ret = ret or {}
+    if self:intersects(r) then
+        if self.children then
+            for _, child in pairs(self.children) do
+                child:getIn(r, ret)
             end
-        end)
-end
-
-function QuadTree:remove(o) -- TODO collapse tree as objects are removed?
-    self:applyToLeaf(
-        function (qt)
-            if (qt.objects[o]) then
-                qt.objects[o] = nil
-                qt.nobjects = qt.nobjects - 1
-            end
-        end)
-end
-
-function QuadTree:update(o)
-    self:remove(o)
-    self:add(o)
-end
-
-function QuadTree:getIn(r)
-    local ret = {}
-    self:applyToLeaf(
-        function (qt)
-            if qt:intersects(r) then
-                for _, o in qt.objects do
+        else
+            for _, o in pairs(self.objects) do
+                if _contains(r, o.x, o.y) then
                     ret[#ret+1] = o
                 end
             end
-        end)
+        end
+    end
     return ret
 end
 
