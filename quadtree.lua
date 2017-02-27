@@ -24,11 +24,15 @@ function QuadTree:contains(x, y)
     return _contains(self, x, y)
 end
 
-function QuadTree:intersects(qt)
-    return (self:contains(qt.x       , qt.y        ) or
-            self:contains(qt.x + qt.w, qt.y        ) or
-            self:contains(qt.x       , qt.y + qt.h ) or
-            self:contains(qt.x + qt.w, qt.y + qt.h ) )
+function _intersects(r1, r2)
+    return (_contains(r1, r2.x       , r2.y        ) or
+            _contains(r1, r2.x + r2.w, r2.y        ) or
+            _contains(r1, r2.x       , r2.y + r2.h ) or
+            _contains(r1, r2.x + r2.w, r2.y + r2.h ) )
+end
+
+function QuadTree:intersects(r)
+    return _intersects(self, r) or _intersects(r, self)
 end
 
 function QuadTree:relevantChild(x, y)
