@@ -9,6 +9,7 @@ local QuadTree = require("quadtree")
 local min = math.min
 local max = math.max
 local MAX_SPEED = 20
+local delta = 0
 
 function love.load()
 
@@ -57,11 +58,16 @@ function love.load()
                         return d
                       end )
     qtree = QuadTree.new(-1000000, -1000000, 2000000, 2000000)
-
+    -- tick.rate = 1/12
  end
 
 
 function love.update(dt)
+    delta = delta + dt
+    if delta < .1 then
+        return
+    end
+    dt = delta
     qtree = QuadTree.new(-1000000, -1000000, 2000000, 2000000)
     ecs:process({'position'},
                 function (p)
@@ -77,6 +83,9 @@ function love.update(dt)
                         local dy = p.y - otherp.y
                         local distance = math.sqrt(dx*dx + dy*dy)
                         if p ~= otherp and distance < 10 then
+                            local dx = p.x - otherp.x - v.vx * dt
+                            local dy = p.y - otherp.y - v.vy * dt
+                            local distance = math.sqrt(dx*dx + dy*dy)
                             v.vx = -v.vx
                             v.vy = -v.vy
                             p.x = otherp.x + (10/distance * dx)
@@ -92,7 +101,7 @@ function love.update(dt)
                     return ecs.KILL
                   end
                 end)
-
+    delta = 0
 end
 
 function love.draw()
@@ -108,16 +117,16 @@ function love.draw()
         w = math.abs(absd[1] - absb[1])
         h = math.abs(absd[2] - absb[2])
         for _, p in pairs(qtree:getIn({x=x, y=y, w=w, h=h})) do
-            love.graphics.push()
+            -- love.graphics.push()
             love.graphics.setColor(255, 0, 0)
             love.graphics.rectangle("line", p.x-2, p.y-2, 14, 14)
-            love.graphics.pop()
+            -- love.graphics.pop()
         end
     end
 
-    ecs:process({'position', 'drawer'},
-                function (p, d)
-                    d.draw(p.x, p.y)
+    ecs:process({'position', 'velocity', 'drawer'},
+                function (p, v, d)
+                    d.draw(p.x+v.vx*delta, p.y+v.vy*delta)
                 end )
 
     qtree:applyToLeaf(
