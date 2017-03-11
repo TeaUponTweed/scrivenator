@@ -2,7 +2,7 @@
 pub struct Camera {
     x: f32,
     y: f32,
-    scale: f32
+    pub scale: f32
 }
 
 impl Camera {
@@ -24,7 +24,12 @@ impl Camera {
         self.y = self.y + dy;
     }
 
-    pub fn abs_pos(&self, px: f32, py: f32) -> (f32, f32) {
-        (px*self.scale + self.x, py*self.scale + self.y)
+    pub fn get_real_pos(&self, px: i32, py: i32) -> (f32, f32) {
+        ((px as f32)*self.scale + self.x, (py as f32)*self.scale + self.y)
+    }
+
+    pub fn get_px_pos(&self, x: f32, y: f32) -> (i32, i32) {
+        (((x - self.x)/self.scale).round() as i32,
+         ((y - self.y)/self.scale).round() as i32)
     }
 }

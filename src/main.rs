@@ -1,55 +1,55 @@
+extern crate froggy;
 extern crate ggez;
-// extern crate sdl2;
+extern crate sdl2;
 
-use std::path;
+pub mod quadtree;
+pub mod vector;
+pub mod camera;
+pub mod gamestate;
+
 use std::time::Duration;
 
 use ggez::conf;
-use ggez::game::{Game, GameState};
 use ggez::{GameResult, Context};
 use ggez::graphics;
-use ggez::timer;
-use ggez::event::{MouseState};
+use ggez::event;
+use ggez::event::{MouseState, EventHandler, Keycode, Mod, MouseButton};
 
-// use sdl2::mouse;
+use gamestate::{World};
 
-// First we make a structure to contain the game's state
-struct MainState {
-    text: graphics::Text,
+fn dt_as_float(dt: Duration) -> f32 {
+    (dt.as_secs() as f32) +  (dt.subsec_nanos() as f32)/(1000000000.0)
 }
 
-// Then we implement the `ggez::game::GameState` trait on it, which
-// requires callbacks for creating the game state, updating it each
-// frame, and drawing it.
-//
-// The `GameState` trait also contains callbacks for event handling
-// that you can override if you wish, but the defaults are fine.
-impl GameState for MainState {
-    fn load(ctx: &mut Context, _conf: &conf::Conf) -> GameResult<MainState> {
-        println!("Game resource path: {:?}", ctx.filesystem);
 
-        let fontpath = path::Path::new("Roboto-Regular.ttf");
-        let font = graphics::Font::new(ctx, fontpath, 48).unwrap();
-        let text = graphics::Text::new(ctx, "Hello world!", &font).unwrap();
-
-        let s = MainState { text: text };
-        Ok(s)
-
-    }
+impl EventHandler for World {
 
     fn update(&mut self, _ctx: &mut Context, _dt: Duration) -> GameResult<()> {
+        self.update_kinematic_entities(dt_as_float(_dt));
         Ok(())
     }
 
     fn draw(&mut self, ctx: &mut Context) -> GameResult<()> {
-        ctx.renderer.clear();
-        try!(graphics::draw(ctx, &mut self.text, None, None));
-        ctx.renderer.present();
-        timer::sleep_until_next_frame(ctx, 60);
+        graphics::clear(ctx);
+        graphics::set_color(ctx, graphics::Color::new(1.0, 1.0, 1.0, 1.0))?;
+        self.draw_squares(ctx)?;
+        graphics::present(ctx);
         Ok(())
     }
 
-    fn mouse_wheel_event(&mut self, _x: i32, _y: i32) {}
+    fn mouse_button_down_event(&mut self, _button: MouseButton, _x: i32, _y: i32) {
+        println!("{:?}", "here");
+        println!("{:?}", _x);
+        println!("{:?}", _y);
+        let (x, y) = self.camera.get_real_pos(_x, _y);
+        println!("{:?}", x);
+        println!("{:?}", y);
+        self.add_entity(x, y, 2.0, 2.0);
+    }
+
+    fn mouse_wheel_event(&mut self, _x: i32, _y: i32) {
+        println!("{:?}", _y);
+    }
 
     fn mouse_motion_event(&mut self,
                           _state: MouseState,
@@ -58,21 +58,17 @@ impl GameState for MainState {
                           _xrel: i32,
                           _yrel: i32) {
     }
+
+    fn key_up_event(&mut self, _keycode: Keycode, _keymod: Mod, _repeat: bool) {}
+
 }
 
-// Now our main function, which does three things:
-//
-// * First, create a new `ggez::conf::Conf`
-// object which contains configuration info on things such
-// as screen resolution and window title,
-// * Second, create a `ggez::game::Game` object which will
-// do the work of creating our MainState and running our game,
-// * then just call `game.run()` which runs the `Game` mainloop.
 pub fn main() {
     let c = conf::Conf::new();
-    let mut game: Game<MainState> = Game::new("helloworld", c).unwrap();
-    if let Err(e) = game.run() {
-        println!("Error encountered: {:?}", e);
+    let ctx = &mut Context::load_from_conf("helloworld", c).unwrap();
+    let state = &mut World::new();
+    if let Err(e) = event::run(ctx, state) {
+        println!("Error encountered: {}", e);
     } else {
         println!("Game exited cleanly.");
     }
