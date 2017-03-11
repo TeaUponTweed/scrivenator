@@ -5,7 +5,7 @@ authors = ["Michael Mason <TeaUponTweed@gmail.com>"]
 
 [dependencies]
 sdl2-sys = "*"
-ggez = "0.2.2"
+ggez = { git = "https://github.com/ggez/ggez.git" }
 rand = "*"
 sdl2 = "*"
 froggy = "*"
