@@ -3,10 +3,6 @@ name = "scriv"
 version = "0.1.0"
 authors = ["Michael Mason <TeaUponTweed@gmail.com>"]
 
-[lib]
-name="scrivenator"
-path="src/lib.rs"
-
 [dependencies]
 sdl2-sys = "*"
 ggez = "0.2.2"
