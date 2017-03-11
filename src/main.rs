@@ -1,11 +1,17 @@
 extern crate ggez;
+// extern crate sdl2;
+
 use std::path;
+use std::time::Duration;
+
 use ggez::conf;
 use ggez::game::{Game, GameState};
 use ggez::{GameResult, Context};
 use ggez::graphics;
 use ggez::timer;
-use std::time::Duration;
+use ggez::event::{MouseState};
+
+// use sdl2::mouse;
 
 // First we make a structure to contain the game's state
 struct MainState {
@@ -41,6 +47,16 @@ impl GameState for MainState {
         ctx.renderer.present();
         timer::sleep_until_next_frame(ctx, 60);
         Ok(())
+    }
+
+    fn mouse_wheel_event(&mut self, _x: i32, _y: i32) {}
+
+    fn mouse_motion_event(&mut self,
+                          _state: MouseState,
+                          _x: i32,
+                          _y: i32,
+                          _xrel: i32,
+                          _yrel: i32) {
     }
 }
 
