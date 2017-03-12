@@ -3,6 +3,8 @@ use froggy;
 use ggez::{GameResult, Context};
 use ggez::graphics;
 
+use rand;
+
 use camera::{Camera};
 
 
@@ -29,6 +31,7 @@ pub struct World {
     entities: Vec<Entity>,
     pub camera: Camera,
     pub last_mouse_state: Option<(i32, i32)>,
+    pub rng: rand::ThreadRng,
 }
 
 impl World {
@@ -43,6 +46,7 @@ impl World {
             entities: entities,
             camera: camera,
             last_mouse_state: None,
+            rng: rand::thread_rng(),
         }
     }
 
