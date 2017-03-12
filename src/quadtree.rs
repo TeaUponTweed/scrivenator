@@ -1,4 +1,4 @@
-use sdl2::rect::Rect;
+use ggez::graphics::Rect;
 
 const MAX_OBJECTS: usize = 15;
 const MAX_LEVELS: i32 = 20;
@@ -31,33 +31,33 @@ impl<Type> Quadtree<Type> where Type: HasExtent {
 
     /// Splits the node into four subnodes
     fn split(&mut self) {
-        let width = ((self.bounds.width() as f64) / 2.0) as i32;
-        let height = ((self.bounds.height() as f64) / 2.0) as i32;
-        let (x, y) = (self.bounds.x(), self.bounds.y());
+        let width = ((self.bounds.w as f64) / 2.0) as f32;
+        let height = ((self.bounds.h as f64) / 2.0) as f32;
+        let (x, y) = (self.bounds.x, self.bounds.y);
 
         if width as u32 > 0u32 && height as u32 > 0u32 {
             self.nodes[0] = Some(Box::new(Quadtree {
                 level: self.level + 1,
                 objects: Vec::with_capacity(MAX_OBJECTS),
-                bounds: Rect::new(x + width, y, width as u32, height as u32),
+                bounds: Rect::new(x + width, y, width as f32, height as f32),
                 nodes: [None, None, None, None],
             }));
             self.nodes[1] = Some(Box::new(Quadtree {
                 level: self.level + 1,
                 objects: Vec::with_capacity(MAX_OBJECTS),
-                bounds: Rect::new(x, y, width as u32, height as u32),
+                bounds: Rect::new(x, y, width as f32, height as f32),
                 nodes: [None, None, None, None],
             }));
             self.nodes[2] = Some(Box::new(Quadtree {
                 level: self.level + 1,
                 objects: Vec::with_capacity(MAX_OBJECTS),
-                bounds: Rect::new(x, y + height, width as u32, height as u32),
+                bounds: Rect::new(x, y + height, width as f32, height as f32),
                 nodes: [None, None, None, None],
             }));
             self.nodes[3] = Some(Box::new(Quadtree {
                 level: self.level + 1,
                 objects: Vec::with_capacity(MAX_OBJECTS),
-                bounds: Rect::new(x + width, y + height, width as u32, height as u32),
+                bounds: Rect::new(x + width, y + height, width as f32, height as f32),
                 nodes: [None, None, None, None],
             }));
         }
@@ -65,21 +65,21 @@ impl<Type> Quadtree<Type> where Type: HasExtent {
 
     /// Determine which node index the object belongs to
     fn index(&self, rect: &Rect) -> Option<i32> {
-        let vert_mid = (self.bounds.x() as f64) + (self.bounds.width() as f64) / 2.;
-        let horiz_mid = (self.bounds.y() as f64) + (self.bounds.height() as f64) / 2.;
+        let vert_mid = (self.bounds.x as f64) + (self.bounds.w as f64) / 2.;
+        let horiz_mid = (self.bounds.y as f64) + (self.bounds.h as f64) / 2.;
 
-        let top_quad = (rect.y() as f64) < horiz_mid &&
-                       (rect.y() as f64) + (rect.height() as f64) < horiz_mid;
-        let bot_quad = (rect.y() as f64) > horiz_mid;
+        let top_quad = (rect.y as f64) < horiz_mid &&
+                       (rect.y as f64) + (rect.h as f64) < horiz_mid;
+        let bot_quad = (rect.y as f64) > horiz_mid;
 
-        if (rect.x() as f64) < vert_mid &&
-           (rect.x() as f64) + (rect.width() as f64) < vert_mid {
+        if (rect.x as f64) < vert_mid &&
+           (rect.x as f64) + (rect.w as f64) < vert_mid {
             if top_quad {
                 return Some(1);
             } else if bot_quad {
                 return Some(2);
             }
-        } else if (rect.x() as f64) > vert_mid {
+        } else if (rect.x as f64) > vert_mid {
             if top_quad {
                 return Some(0);
             } else if bot_quad {
