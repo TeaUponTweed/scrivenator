@@ -166,8 +166,12 @@ impl World {
     }
 
     pub fn draw_squares(&self, ctx: &mut Context) -> GameResult<()> {
+        let win_width = (ctx.conf.window_width as f32) * self.camera.scale;
+        let win_height = (ctx.conf.window_height as f32) * self.camera.scale;
+        let mut quadtree = self.build_quadree();
         let positions = self.pos.read();
-        for e in self.entities.iter() {
+        // for e in self.entities.iter() {
+        for &Wakka{entity: ref e, ..} in quadtree.retrieve(&Rect{x: self.camera.x, y: self.camera.y, w: win_width, h: win_height}) {
             let p = positions.access(&e.pos);
             let (px, py) = self.camera.get_px_pos(p.x, p.y);
             let pxsize = (10.0/self.camera.scale).round() as u32;
