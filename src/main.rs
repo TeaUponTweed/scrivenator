@@ -48,7 +48,16 @@ impl EventHandler for World {
     }
 
     fn mouse_wheel_event(&mut self, _x: i32, _y: i32) {
-        println!("{:?}", _y);
+        match self.last_mouse_state {
+            Some((mx, my)) => {
+                if _y > 0 {
+                    self.camera.scale_around(17.0/16.0, mx as f32, my as f32)
+                } else if _y < 0 {
+                    self.camera.scale_around(15.0/16.0, mx as f32, my as f32)
+                }
+            }
+            None => {},
+        }
     }
 
     fn mouse_motion_event(&mut self,
@@ -57,6 +66,7 @@ impl EventHandler for World {
                           _y: i32,
                           _xrel: i32,
                           _yrel: i32) {
+        self.last_mouse_state = Some((_x, _y));
     }
 
     fn key_up_event(&mut self, _keycode: Keycode, _keymod: Mod, _repeat: bool) {}

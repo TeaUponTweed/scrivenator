@@ -27,7 +27,8 @@ pub struct World {
     pos: froggy::Storage<Position>,
     vel: froggy::Storage<Velocity>,
     entities: Vec<Entity>,
-    pub camera: Camera
+    pub camera: Camera,
+    pub last_mouse_state: Option<(i32, i32)>,
 }
 
 impl World {
@@ -41,6 +42,7 @@ impl World {
             vel: vstorage,
             entities: entities,
             camera: camera,
+            last_mouse_state: None,
         }
     }
 
