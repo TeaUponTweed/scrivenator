@@ -101,7 +101,7 @@ impl World {
         // Find quadtree bounding rectangle
         let (mut minx, mut miny, mut maxx, mut maxy) = (f32::MAX, f32::MAX, f32::MIN, f32::MIN);
         for e in self.entities.iter() {
-            let Position {x: x, y: y} = *positions.access(&e.pos);
+            let Position {x, y} = *positions.access(&e.pos);
             minx = min(x, minx);
             maxx = max(x, maxx);
             miny = min(y, miny);
@@ -111,7 +111,7 @@ impl World {
         let mut quadtree = Quadtree::new(Rect{x: minx, y:miny, w: maxx-minx, h:maxy-miny});
 
         for e in self.entities.iter() {
-            let Position{x: x, y: y} = *positions.access(&e.pos);
+            let Position{x, y} = *positions.access(&e.pos);
             let w = Wakka{entity: (*e).clone(), extent: Rect {x: x, y: y, w: 10.0, h: 10.0} };
             quadtree.insert(w)
         }
@@ -129,7 +129,6 @@ impl World {
                 let v = velocities.access(&e.vel);
                 for &Wakka{entity: ref othere, ..} in quadtree.retrieve(&Rect{x: (*p).x, y: (*p).y, w: 10.0, h: 10.0}) {
                     let otherp = positions.access(&othere.pos);
-                    let otherv = velocities.access(&othere.vel);
                     let dx = p.x - otherp.x;
                     let dy = p.y - otherp.y;
                     let distance = (dx*dx + dy*dy).sqrt();
