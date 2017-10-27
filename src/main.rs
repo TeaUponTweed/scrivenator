@@ -4,7 +4,6 @@ extern crate sdl2;
 extern crate rand;
 
 pub mod quadtree;
-pub mod vector;
 pub mod camera;
 pub mod gamestate;
 
@@ -14,8 +13,10 @@ use std::f32::consts::{PI};
 use ggez::conf;
 use ggez::{GameResult, Context};
 use ggez::graphics;
-use ggez::event;
-use ggez::event::{MouseState, EventHandler, Keycode, Mod, MouseButton};
+// use ggez::event;
+// use ggez::event::{MouseState, EventHandler, Keycode, Mod, MouseButton};
+use ggez::timer;
+use ggez::event::*;
 
 use rand::distributions::{Range, IndependentSample};
 
@@ -30,10 +31,12 @@ fn dt_as_float(dt: Duration) -> f32 {
 
 impl EventHandler for World {
 
-    fn update(&mut self, _ctx: &mut Context, _dt: Duration) -> GameResult<()> {
-        let dt = dt_as_float(_dt);
-        println!("FPS: {:?}", 1.0/dt);
-        self.update_kinematic_entities(dt);
+    fn update(&mut self, ctx: &mut Context) -> GameResult<()> {
+        const DESIRED_FPS: u32 = 60;
+        while timer::check_update_time(ctx, DESIRED_FPS) {
+            let dt = 1.0 / (DESIRED_FPS as f32);
+            self.update_kinematic_entities(dt);
+        }
         Ok(())
     }
 
@@ -45,7 +48,7 @@ impl EventHandler for World {
         Ok(())
     }
 
-    fn mouse_button_down_event(&mut self, _button: MouseButton, mx: i32, my: i32) {
+    fn mouse_button_down_event(&mut self, ctx: &mut Context, _button: MouseButton, mx: i32, my: i32) {
         let (x, y) = self.camera.get_real_pos(mx, my);
         let pos_range = Range::new(-100.0, 100.0);
         let speed_range = Range::new(50.0, 200.0);
@@ -62,7 +65,7 @@ impl EventHandler for World {
 
     }
 
-    fn mouse_wheel_event(&mut self, _x: i32, _y: i32) {
+    fn mouse_wheel_event(&mut self, ctx: &mut Context, _x: i32, _y: i32) {
         match self.last_mouse_state {
             Some((mx, my)) => {
                 if _y > 0 {
@@ -75,7 +78,7 @@ impl EventHandler for World {
         }
     }
 
-    fn mouse_motion_event(&mut self,
+    fn mouse_motion_event(&mut self, ctx: &mut Context,
                           _state: MouseState,
                           _x: i32,
                           _y: i32,
@@ -84,17 +87,34 @@ impl EventHandler for World {
         self.last_mouse_state = Some((_x, _y));
     }
 
-    fn key_up_event(&mut self, _keycode: Keycode, _keymod: Mod, _repeat: bool) {}
+    fn key_up_event(&mut self, ctx: &mut Context, _keycode: Keycode, _keymod: Mod, _repeat: bool) {}
 
 }
 
 pub fn main() {
-    let c = conf::Conf::new();
-    let ctx = &mut Context::load_from_conf("helloworld", c).unwrap();
-    let state = &mut World::new();
-    if let Err(e) = event::run(ctx, state) {
-        println!("Error encountered: {}", e);
-    } else {
-        println!("Game exited cleanly.");
+    let mut c = conf::Conf::new();
+    c.window_title = "Astroblasto!".to_string();
+    c.window_width = 640;
+    c.window_height = 480;
+    let ctx = &mut Context::load_from_conf("astroblasto", "ggez", c).unwrap();
+    // let state = &mut World::new(ctx);
+    // if let Err(e) = event::run(ctx, state) {
+    //     println!("Error encountered: {}", e);
+    // } else {
+    //     println!("Game exited cleanly.");
+    // }
+    match World::new(ctx) {
+        Err(e) => {
+            println!("Could not load game!");
+            println!("Error: {}", e);
+        }
+        Ok(ref mut game) => {
+            let result = run(ctx, game);
+            if let Err(e) = result {
+                println!("Error encountered running game: {}", e);
+            } else {
+                println!("Game exited cleanly.");
+            }
+        }
     }
 }

@@ -1,178 +1,141 @@
 use std::f32;
-// use std::cmp::{min, max};
-use froggy;
+use std;
+use std::collections::HashSet;
+use std::collections::HashMap;
 
 use ggez::{GameResult, Context};
 use ggez::graphics;
-use ggez::graphics::{Rect};
+use ggez::graphics::Vector2;
+// use ggez::nalgebra as na;
 
 use rand;
 
 use camera::{Camera};
-use quadtree::{Quadtree, HasExtent};
 
-#[derive(Clone, Debug, PartialEq)]
-pub struct Position {
-    x: f32,
-    y: f32,
+fn vec_from_angle(angle: f32) -> Vector2 {
+    let vx = angle.sin();
+    let vy = angle.cos();
+    Vector2::new(vx, vy)
 }
 
-#[derive(Clone, Debug, PartialEq)]
-pub struct Velocity {
-    vx: f32,
-    vy: f32,
+fn random_vec(max_magnitude: f32) -> Vector2 {
+    let angle = rand::random::<f32>() * 2.0 * std::f32::consts::PI;
+    let mag = rand::random::<f32>() * max_magnitude;
+    vec_from_angle(angle) * (mag)
 }
 
-#[derive(Clone, PartialEq)]
+fn collide_enities(e1: Entity, e2: Entity, min_distance: f32) -> (Entity, Entity)
+{
+    let one_to_two = e2.pos - e1.pos;
+    let distance = one_to_two.norm();
+    let pos_delta = (min_distance - distance)/2.0 * one_to_two;
+    (
+        Entity {
+            id: e1.id,
+            pos: e1.pos - pos_delta,
+            vel: one_to_two/distance*e1.vel.norm()
+        },
+        Entity {
+            id: e2.id,
+            pos: e2.pos + pos_delta,
+            vel: one_to_two/distance*e2.vel.norm()
+        },
+    )
+}
+
+type cm = i32;
+type Position = Vector2;
+type Velocity = Vector2;
+type id_t = i32;
+
+const SQUARE_SIZE: f32 = 10.0;
+
+#[derive(Hash, Eq, PartialEq, Debug)]
 pub struct Entity {
-    pos: froggy::Pointer<Position>,
-    vel: froggy::Pointer<Velocity>,
+    id  : id_t,
+    pos : Position,
+    vel : Velocity
 }
 
-struct Wakka {
-    entity: Entity,
-    extent: Rect,
-}
-
-impl HasExtent for Wakka {
-    fn rect(&self) -> Rect {
-        self.extent
-    }
-}
-
-fn min<T: PartialOrd> (a: T, b: T) -> T {
-    if a <= b {
-        a
-    } else {
-        b
-    }
-    // match a.le(&b) {
-    //     Some(true) => a,
-    //     Some(false) => b,
-    //     None => b,
-    // }
-}
-
-fn max<T: PartialOrd> (a: T, b: T) -> T {
-    if a <= b {
-        b
-    } else {
-        a
-    }
-}
 
 pub struct World {
-    pos: froggy::Storage<Position>,
-    vel: froggy::Storage<Velocity>,
-    entities: Vec<Entity>,
+    entities: HashMap<id_t, Entity>,
+    current_id: i32,
     pub camera: Camera,
     pub last_mouse_state: Option<(i32, i32)>,
     pub rng: rand::ThreadRng,
 }
 
 impl World {
-    pub fn new() -> World {
-        let pstorage = froggy::Storage::new();
-        let vstorage = froggy::Storage::new();
-        let entities = Vec::new();
+    pub fn new(ctx: &mut Context) -> GameResult<World> {
+        ctx.print_resource_stats();
+
+        let entities = HashMap::new();
         let camera = Camera::new();
-        World {
-            pos: pstorage,
-            vel: vstorage,
+        let w = World {
             entities: entities,
+            current_id: 0,
             camera: camera,
             last_mouse_state: None,
             rng: rand::thread_rng(),
-        }
+        };
+        Ok(w)
     }
 
     pub fn add_entity(&mut self, x: f32, y: f32, vx: f32, vy: f32) {
-        let mut positions = self.pos.write();
-        let mut velocities = self.vel.write();
-        self.entities.push(Entity {
-            pos: positions.create(Position { x: x, y: y }),
-            vel: velocities.create(Velocity { vx: vx, vy: vy }),
-        });
+        self.entities.insert (
+            self.current_id,
+            Entity {
+                id: self.current_id,
+                pos: Vector2::new(x, y),
+                vel: Vector2::new(vx, vy)
+            }
+        );
+        self.current_id += 1;
         println!("{:?}",  self.entities.len());
     }
 
-    fn build_quadree(&self) -> Quadtree<Wakka> {
-        let positions = self.pos.read();
-        // Find quadtree bounding rectangle
-        let (mut minx, mut miny, mut maxx, mut maxy) = (f32::MAX, f32::MAX, f32::MIN, f32::MIN);
-        for e in self.entities.iter() {
-            let Position {x, y} = *positions.access(&e.pos);
-            minx = min(x, minx);
-            maxx = max(x, maxx);
-            miny = min(y, miny);
-            maxy = max(y, maxy);
-        }
-
-        let mut quadtree = Quadtree::new(Rect{x: minx, y:miny, w: maxx-minx, h:maxy-miny});
-
-        for e in self.entities.iter() {
-            let Position{x, y} = *positions.access(&e.pos);
-            let w = Wakka{entity: (*e).clone(), extent: Rect {x: x, y: y, w: 10.0, h: 10.0} };
-            quadtree.insert(w)
-        }
-        quadtree
-    }
-
     pub fn update_kinematic_entities(&mut self, dt: f32) {
-        let mut quadtree = self.build_quadree();
-        let mut colliding_enities = Vec::new();
+        let mut colliding_enities = HashSet::new();
         {
-            let positions = self.pos.read();
-            let velocities = self.vel.read();
-            for e in self.entities.iter() {
-                let p = positions.access(&e.pos);
-                let v = velocities.access(&e.vel);
-                for &Wakka{entity: ref othere, ..} in quadtree.retrieve(&Rect{x: (*p).x, y: (*p).y, w: 10.0, h: 10.0}) {
-                    let otherp = positions.access(&othere.pos);
-                    let dx = p.x - otherp.x;
-                    let dy = p.y - otherp.y;
-                    let distance = (dx*dx + dy*dy).sqrt();
-                    if distance < 10.0 {
-                        let updated_dx = p.x - otherp.x - v.vx * dt;
-                        let updated_dy = p.y - otherp.y - v.vy * dt;
-                        let updated_distance = (updated_dx*updated_dx + updated_dy*updated_dy).sqrt();
-                        colliding_enities.push((e,
-                                                otherp.x + (10.0/updated_distance * dx),
-                                                otherp.y + (10.0/updated_distance * dy),
-                                                -v.vx,
-                                                -v.vy));
+            for &entity in self.entities.iter() {
+                for &other_entity in self.entities.iter() {
+                    if entity.id == other_entity.id {
+                        continue;
+                    }
+                    if colliding_enities.contains(entity) {
+                        break;
+                    }
+                    if colliding_enities.contains(other_entity) {
+                        continue;
+                    }
+                    let distance = (entity.pos - other_entity.pos).norm();
+                    if distance < SQUARE_SIZE {
+                        let (e1, e2) = colliding_enities(entity, other_entity, SQUARE_SIZE);
+                        colliding_enities.insert(e1);
+                        colliding_enities.insert(e2);
                         break;
                     }
                 }
             }
         }
-        let mut positions = self.pos.write();
-        let mut velocities = self.vel.write();
-        for &(e, px, py, vx, vy) in colliding_enities.iter() {
-            let mut p = positions.access(&e.pos);
-            let mut v = velocities.access(&e.vel);
-            p.x = px;
-            p.y = py;
-            v.vx = vx;
-            v.vy = vy;
+        for &e in colliding_enities.iter() {
+            self.update_entity(e);
         }
-        for e in self.entities.iter() {
-            let mut p = positions.access(&e.pos);
-            let v = velocities.access(&e.vel);
-            p.x += v.vx*dt;
-            p.y += v.vy*dt;
+    }
+
+    pub fn update_entity(&mut self, e: Entity) {
+        match self.entities.get(e.id) {
+            Some(_) => self.entities.write(e),
+            _ => println!("Dont have entity {:?}, can't update", e.id),
         }
     }
 
     pub fn draw_squares(&self, ctx: &mut Context) -> GameResult<()> {
         let win_width = (ctx.conf.window_width as f32) * self.camera.scale;
         let win_height = (ctx.conf.window_height as f32) * self.camera.scale;
-        let mut quadtree = self.build_quadree();
-        let positions = self.pos.read();
-        // for e in self.entities.iter() {
-        for &Wakka{entity: ref e, ..} in quadtree.retrieve(&Rect{x: self.camera.x, y: self.camera.y, w: win_width, h: win_height}) {
-            let p = positions.access(&e.pos);
-            let (px, py) = self.camera.get_px_pos(p.x, p.y);
+        for e in self.entities.iter() {
+            let (px, py) = self.camera.get_px_pos(e.pos[0], e.pos[1]);
             let pxsize = (10.0/self.camera.scale).round() as u32;
             let rect = graphics::Rect::new(px as f32, py as f32, pxsize as f32, pxsize as f32);
             graphics::rectangle(ctx, graphics::DrawMode::Fill, rect)?;

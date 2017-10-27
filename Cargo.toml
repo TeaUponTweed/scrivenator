@@ -9,3 +9,4 @@ ggez = { git = "https://github.com/ggez/ggez.git" }
 rand = "*"
 sdl2 = "*"
 froggy = "*"
+rayon = "*"
