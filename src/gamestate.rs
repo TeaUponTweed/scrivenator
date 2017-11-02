@@ -97,6 +97,8 @@ impl World {
 
     pub fn update_kinematic_entities(&mut self, dt: f32) {
         let mut colliding_enities = HashSet::new();
+        let mut colliding_enities = Vec::new();
+        let mut has_collided = HashSet::new();
         {
             for &entity in self.entities.iter() {
                 for &other_entity in self.entities.iter() {
@@ -106,14 +108,16 @@ impl World {
                     if colliding_enities.contains(entity) {
                         break;
                     }
-                    if colliding_enities.contains(other_entity) {
+                    if has_collided.contains(other_entity.id) {
                         continue;
                     }
                     let distance = (entity.pos - other_entity.pos).norm();
                     if distance < SQUARE_SIZE {
                         let (e1, e2) = colliding_enities(entity, other_entity, SQUARE_SIZE);
                         colliding_enities.insert(e1);
+                        has_collided.insert(e1.id);
                         colliding_enities.insert(e2);
+                        has_collided.insert(e2.id);
                         break;
                     }
                 }
