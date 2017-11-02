@@ -24,7 +24,7 @@ fn random_vec(max_magnitude: f32) -> Vector2 {
     vec_from_angle(angle) * (mag)
 }
 
-fn collide_enities(e1: Entity, e2: Entity, min_distance: f32) -> (Entity, Entity)
+fn collide_enities(e1: &Entity, e2: &Entity, min_distance: f32) -> (Entity, Entity)
 {
     let one_to_two = e2.pos - e1.pos;
     let distance = one_to_two.norm();
@@ -99,8 +99,10 @@ impl World {
         let mut colliding_enities = Vec::new();
         let mut has_collided = HashSet::new();
         {
-            for ref entity in self.entities.values() {
-                for ref other_entity in self.entities.values() {
+            let mut i = self.entities.values();
+            // for ref entity in self.entities.values() {
+            while let Some(entity) = i.next() {
+                for other_entity in self.entities.values() {
                     if entity.id == other_entity.id {
                         continue;
                     }
@@ -113,19 +115,18 @@ impl World {
                     let distance = (entity.pos - other_entity.pos).norm();
                     if distance < SQUARE_SIZE {
                         let (e1, e2) = collide_enities(entity, other_entity, SQUARE_SIZE);
-                        colliding_enities.push(e1);
                         has_collided.insert(e1.id);
-                        colliding_enities.push(e2);
+                        colliding_enities.push(e1);
                         has_collided.insert(e2.id);
+                        colliding_enities.push(e2);
                         break;
                     }
                 }
             }
         }
-        for e in colliding_enities.iter() {
-            self.update_entity(&e);
+        while let Some(e) = colliding_enities.pop() {
+            self.entities.insert(e.id, e);
         }
-
         // self.entities = {}
         // let thing = self.entities.values.collect().par_iter().map(|e| store.compute_price(&list))
         let updated_entities = self.entities.values().map(|e|
@@ -137,8 +138,8 @@ impl World {
         // }
     }
 
-    pub fn update_entity(&mut self, e: &Entity) {
-        self.entities.insert(e.id, *e);
+    pub fn update_entity(&mut self, e: Entity) {
+        self.entities.insert(e.id, e);
         // match self.entities.get(&e.id) {
         //     Some(_) => self.entities.insert(e.id, *e),
         //     _ => println!("Dont have entity {:?}, can't update", e.id),
