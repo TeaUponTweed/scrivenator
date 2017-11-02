@@ -50,11 +50,11 @@ type id_t = i32;
 
 const SQUARE_SIZE: f32 = 10.0;
 
-#[derive(Hash, Eq, PartialEq, Debug)]
+#[derive(PartialEq, Debug)]
 pub struct Entity {
-    id  : id_t,
-    pos : Position,
-    vel : Velocity
+    pub id  : id_t,
+    pub pos : Position,
+    pub vel : Velocity
 }
 
 
@@ -96,49 +96,59 @@ impl World {
     }
 
     pub fn update_kinematic_entities(&mut self, dt: f32) {
-        let mut colliding_enities = HashSet::new();
         let mut colliding_enities = Vec::new();
         let mut has_collided = HashSet::new();
         {
-            for &entity in self.entities.iter() {
-                for &other_entity in self.entities.iter() {
+            for ref entity in self.entities.values() {
+                for ref other_entity in self.entities.values() {
                     if entity.id == other_entity.id {
                         continue;
                     }
-                    if colliding_enities.contains(entity) {
+                    if has_collided.contains(&entity.id) {
                         break;
                     }
-                    if has_collided.contains(other_entity.id) {
+                    if has_collided.contains(&other_entity.id) {
                         continue;
                     }
                     let distance = (entity.pos - other_entity.pos).norm();
                     if distance < SQUARE_SIZE {
-                        let (e1, e2) = colliding_enities(entity, other_entity, SQUARE_SIZE);
-                        colliding_enities.insert(e1);
+                        let (e1, e2) = collide_enities(entity, other_entity, SQUARE_SIZE);
+                        colliding_enities.push(e1);
                         has_collided.insert(e1.id);
-                        colliding_enities.insert(e2);
+                        colliding_enities.push(e2);
                         has_collided.insert(e2.id);
                         break;
                     }
                 }
             }
         }
-        for &e in colliding_enities.iter() {
-            self.update_entity(e);
+        for e in colliding_enities.iter() {
+            self.update_entity(&e);
         }
+
+        // self.entities = {}
+        // let thing = self.entities.values.collect().par_iter().map(|e| store.compute_price(&list))
+        let updated_entities = self.entities.values().map(|e|
+            (e.id, Entity {pos: e.pos + e.vel *dt, .. *e})
+        ).collect();
+
+        self.entities = updated_entities;
+        //     e.pos += e.vel * dt;
+        // }
     }
 
-    pub fn update_entity(&mut self, e: Entity) {
-        match self.entities.get(e.id) {
-            Some(_) => self.entities.write(e),
-            _ => println!("Dont have entity {:?}, can't update", e.id),
-        }
+    pub fn update_entity(&mut self, e: &Entity) {
+        self.entities.insert(e.id, *e);
+        // match self.entities.get(&e.id) {
+        //     Some(_) => self.entities.insert(e.id, *e),
+        //     _ => println!("Dont have entity {:?}, can't update", e.id),
+        // };
     }
 
     pub fn draw_squares(&self, ctx: &mut Context) -> GameResult<()> {
         let win_width = (ctx.conf.window_width as f32) * self.camera.scale;
         let win_height = (ctx.conf.window_height as f32) * self.camera.scale;
-        for e in self.entities.iter() {
+        for e in self.entities.values() {
             let (px, py) = self.camera.get_px_pos(e.pos[0], e.pos[1]);
             let pxsize = (10.0/self.camera.scale).round() as u32;
             let rect = graphics::Rect::new(px as f32, py as f32, pxsize as f32, pxsize as f32);
