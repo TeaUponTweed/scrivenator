@@ -11,3 +11,7 @@ sdl2 = "*"
 froggy = "*"
 rayon = "*"
 nalgebra = "0.13.0"
+clippy = {version = "*", optional = true}
+
+[features]
+default = []
