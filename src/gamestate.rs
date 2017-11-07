@@ -1,5 +1,5 @@
 use std::f32;
-use std;
+// use std;
 use std::collections::HashSet;
 use std::collections::HashMap;
 
@@ -12,17 +12,17 @@ use rand;
 
 use camera::{Camera};
 
-fn vec_from_angle(angle: f32) -> Vector2 {
-    let vx = angle.sin();
-    let vy = angle.cos();
-    Vector2::new(vx, vy)
-}
+// fn vec_from_angle(angle: f32) -> Vector2 {
+//     let vx = angle.sin();
+//     let vy = angle.cos();
+//     Vector2::new(vx, vy)
+// }
 
-fn random_vec(max_magnitude: f32) -> Vector2 {
-    let angle = rand::random::<f32>() * 2.0 * std::f32::consts::PI;
-    let mag = rand::random::<f32>() * max_magnitude;
-    vec_from_angle(angle) * (mag)
-}
+// fn random_vec(max_magnitude: f32) -> Vector2 {
+//     let angle = rand::random::<f32>() * 2.0 * std::f32::consts::PI;
+//     let mag = rand::random::<f32>() * max_magnitude;
+//     vec_from_angle(angle) * (mag)
+// }
 
 fn collide_enities(e1: &Entity, e2: &Entity, min_distance: f32) -> (Entity, Entity)
 {
@@ -43,23 +43,23 @@ fn collide_enities(e1: &Entity, e2: &Entity, min_distance: f32) -> (Entity, Enti
     )
 }
 
-type cm = i32;
+// type cm = i32;
 type Position = Vector2;
 type Velocity = Vector2;
-type id_t = i32;
+type IdT = i32;
 
 const SQUARE_SIZE: f32 = 10.0;
 
 #[derive(PartialEq, Debug)]
 pub struct Entity {
-    pub id  : id_t,
+    pub id  : IdT,
     pub pos : Position,
     pub vel : Velocity
 }
 
 
 pub struct World {
-    entities: HashMap<id_t, Entity>,
+    entities: HashMap<IdT, Entity>,
     current_id: i32,
     pub camera: Camera,
     pub last_mouse_state: Option<(i32, i32)>,
@@ -147,8 +147,8 @@ impl World {
     }
 
     pub fn draw_squares(&self, ctx: &mut Context) -> GameResult<()> {
-        let win_width = (ctx.conf.window_width as f32) * self.camera.scale;
-        let win_height = (ctx.conf.window_height as f32) * self.camera.scale;
+        // let win_width = (ctx.conf.window_width as f32) * self.camera.scale;
+        // let win_height = (ctx.conf.window_height as f32) * self.camera.scale;
         for e in self.entities.values() {
             let (px, py) = self.camera.get_px_pos(e.pos[0], e.pos[1]);
             let pxsize = (10.0/self.camera.scale).round() as u32;

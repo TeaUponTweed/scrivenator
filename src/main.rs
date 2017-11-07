@@ -27,16 +27,15 @@ use rand::distributions::{Range, IndependentSample};
 use gamestate::{World};
 
 
-
-fn dt_as_float(dt: Duration) -> f32 {
-    (dt.as_secs() as f32) +  (dt.subsec_nanos() as f32)/(1000000000.0)
-}
+// fn dt_as_float(dt: Duration) -> f32 {
+//     (dt.as_secs() as f32) +  (dt.subsec_nanos() as f32)/(1000000000.0)
+// }
 
 
 impl EventHandler for World {
 
     fn update(&mut self, ctx: &mut Context) -> GameResult<()> {
-        const DESIRED_FPS: u32 = 60;
+        const DESIRED_FPS: u32 = 20;
         while timer::check_update_time(ctx, DESIRED_FPS) {
             let dt = 1.0 / (DESIRED_FPS as f32);
             self.update_kinematic_entities(dt);
@@ -52,12 +51,12 @@ impl EventHandler for World {
         Ok(())
     }
 
-    fn mouse_button_down_event(&mut self, ctx: &mut Context, _button: MouseButton, mx: i32, my: i32) {
+    fn mouse_button_down_event(&mut self, _: &mut Context, _button: MouseButton, mx: i32, my: i32) {
         let (x, y) = self.camera.get_real_pos(mx, my);
         let pos_range = Range::new(-100.0, 100.0);
         let speed_range = Range::new(50.0, 200.0);
         let dir_range = Range::new(0.0, 2.0*PI);
-        for _ in 0..200 {
+        for _ in 0..20 {
             let dir = dir_range.ind_sample(&mut self.rng);
             let speed = speed_range.ind_sample(&mut self.rng);
             let posx = x + pos_range.ind_sample(&mut self.rng);
@@ -69,7 +68,7 @@ impl EventHandler for World {
 
     }
 
-    fn mouse_wheel_event(&mut self, ctx: &mut Context, _x: i32, _y: i32) {
+    fn mouse_wheel_event(&mut self, _: &mut Context, _x: i32, _y: i32) {
         match self.last_mouse_state {
             Some((mx, my)) => {
                 if _y > 0 {
@@ -82,7 +81,7 @@ impl EventHandler for World {
         }
     }
 
-    fn mouse_motion_event(&mut self, ctx: &mut Context,
+    fn mouse_motion_event(&mut self, _: &mut Context,
                           _state: MouseState,
                           _x: i32,
                           _y: i32,
@@ -91,7 +90,7 @@ impl EventHandler for World {
         self.last_mouse_state = Some((_x, _y));
     }
 
-    fn key_up_event(&mut self, ctx: &mut Context, _keycode: Keycode, _keymod: Mod, _repeat: bool) {}
+    fn key_up_event(&mut self, _: &mut Context, _keycode: Keycode, _keymod: Mod, _repeat: bool) {}
 
 }
 
