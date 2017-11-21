@@ -16,3 +16,12 @@ The black market acquires all the sir-charges associated with illegal activity (
 As a rule of thumb, each positive increment costs twice as much
     * A 3 story building costs 8 times as much as a one story building
 
+TODO
+    * Create shards and non shards
+        * Some sort of swirling affect ing cloud areas
+        * Terrain for the shards
+            * Multiple biomes per shard
+    * Roughly animate animals
+        * Main body is tied to position
+        * Head goes to current interaction
+            * Need idle stance
