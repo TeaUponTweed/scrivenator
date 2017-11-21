@@ -54,6 +54,12 @@ impl EventHandler for World {
 
     fn mouse_button_down_event(&mut self, _: &mut Context, _button: MouseButton, mx: i32, my: i32) {
         let (x, y) = self.camera.get_real_pos(mx, my);
+        println!("mouse  x={:?}", mx );
+        println!("mouse  y={:?}", my );
+        println!("camera x={:?}", self.camera.x );
+        println!("camera y={:?}", self.camera.y );
+        println!("real   x={:?}", x );
+        println!("real   y={:?}", y );
         let pos_range = Range::new(-100.0, 100.0);
         let speed_range = Range::new(50.0, 200.0);
         let dir_range = Range::new(0.0, 2.0*PI);
@@ -79,7 +85,10 @@ impl EventHandler for World {
                 }
             }
             None => {},
-        }
+        };
+        println!("camera x={:?}"    , self.camera.x);
+        println!("camera y={:?}"    , self.camera.y);
+        println!("camera scale={:?}", self.camera.scale);
     }
 
     fn mouse_motion_event(&mut self, _: &mut Context,
@@ -98,8 +107,10 @@ impl EventHandler for World {
 pub fn main() {
     let mut c = conf::Conf::new();
     c.window_title = "Astroblasto!".to_string();
-    c.window_width = 640;
-    c.window_height = 480;
+    let window_width = 640;
+    let window_height = 480;
+    c.window_width = window_width;
+    c.window_height = window_height;
 
     let ctx = &mut Context::load_from_conf("astroblasto", "ggez", c).unwrap();
     // We add the CARGO_MANIFEST_DIR/resources do the filesystems paths so
@@ -113,7 +124,7 @@ pub fn main() {
         println!("aie?");
     }
 
-    match World::new(ctx) {
+    match World::new(ctx, window_width as f32, window_height as f32) {
         Err(e) => {
             println!("Could not load game!");
             println!("Error: {}", e);

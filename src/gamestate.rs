@@ -67,11 +67,9 @@ pub struct World {
 }
 
 impl World {
-    pub fn new(ctx: &mut Context) -> GameResult<World> {
-        ctx.print_resource_stats();
-
+    pub fn new(ctx: &mut Context, win_width: f32, win_height: f32) -> GameResult<World> {
         let entities = HashMap::new();
-        let camera = Camera::new();
+        let camera = Camera::new(win_width, win_height);
         let w = World {
             entities: entities,
             current_id: 0,
@@ -95,7 +93,8 @@ impl World {
         println!("{:?}",  self.entities.len());
     }
 
-    pub fn update_kinematic_entities(&mut self, dt: f32) {
+    fn collide(&mut self, dt: f32)
+    {
         let mut colliding_enities = Vec::new();
         let mut has_collided = HashSet::new();
         {
@@ -127,47 +126,35 @@ impl World {
         while let Some(e) = colliding_enities.pop() {
             self.entities.insert(e.id, e);
         }
-        // self.entities = {}
-        // let thing = self.entities.values.collect().par_iter().map(|e| store.compute_price(&list))
+    }
+
+    pub fn update_kinematic_entities(&mut self, dt: f32) {
+
         let updated_entities = self.entities.values().map(|e|
             (e.id, Entity {pos: e.pos + e.vel *dt, .. *e})
         ).collect();
 
         self.entities = updated_entities;
-        //     e.pos += e.vel * dt;
-        // }
     }
 
-    pub fn update_entity(&mut self, e: Entity) {
-        self.entities.insert(e.id, e);
-        // match self.entities.get(&e.id) {
-        //     Some(_) => self.entities.insert(e.id, *e),
-        //     _ => println!("Dont have entity {:?}, can't update", e.id),
-        // };
-    }
 
     pub fn draw_squares(&self, ctx: &mut Context) -> GameResult<()> {
-        // let win_width = (ctx.conf.window_width as f32) * self.camera.scale;
-        // let win_height = (ctx.conf.window_height as f32) * self.camera.scale;
         let circle_image = graphics::Image::new(ctx, "/circle.png").unwrap();
         let mut spritebatch = graphics::spritebatch::SpriteBatch::new(circle_image);
 
         for e in self.entities.values() {
-            // let (px, py) = self.camera.get_px_pos(e.pos[0], e.pos[1]);
+            let (px, py) = self.camera.get_px_pos(e.pos[0], e.pos[1]);
 
             let p = graphics::DrawParam {
-                dest: graphics::Point2::new(e.pos[0], e.pos[1]),
-                scale: graphics::Point2::new(self.camera.scale, self.camera.scale),
-                rotation: 0.0,
+                dest: graphics::Point2::new(px as f32, py as f32),
+                // scale: graphics::Point2::new(1.0, 1.0),
+                scale: graphics::Point2::new(1.0/self.camera.scale, 1.0/self.camera.scale),
                 ..Default::default()
             };
             spritebatch.add(p);
         }
         let param = graphics::DrawParam {
-            dest: graphics::Point2::new(0.0, 0.0),
-            scale: graphics::Point2::new(self.camera.scale, self.camera.scale),
-            rotation: 0.0,
-            offset: graphics::Point2::new(self.camera.x, self.camera.y),
+            // dest: graphics::Point2::new(self.camera.x, self.camera.y),
             ..Default::default()
         };
         graphics::draw_ex(ctx, &spritebatch, param)?;

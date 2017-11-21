@@ -1,13 +1,21 @@
 #[derive(Debug)]
 pub struct Camera {
+    pub winx: f32,
+    pub winy: f32,
     pub x: f32,
     pub y: f32,
     pub scale: f32
 }
 
 impl Camera {
-    pub fn new() -> Camera {
-        Camera {x: 0.0, y: 0.0, scale: 1.0}
+    pub fn new(winx: f32, winy: f32) -> Camera {
+        Camera {
+            winx  : winx as f32,
+            winy  : winy as f32,
+            x     : 0.0,
+            y     : 0.0,
+            scale : 1.0
+        }
     }
     pub fn scale_around(&mut self, alpha: f32, x: f32, y: f32) {
         let dx = x*self.scale*(1.0 - alpha);
