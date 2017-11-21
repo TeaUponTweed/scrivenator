@@ -70,7 +70,7 @@ impl EventHandler for World {
             let posy = y + pos_range.ind_sample(&mut self.rng);
             let velx = speed*dir.cos();
             let vely = speed*dir.sin();
-            self.add_entity(posx, posy, velx, vely);
+            self.add_kinematic_entity(posx, posy, velx, vely);
         }
 
     }

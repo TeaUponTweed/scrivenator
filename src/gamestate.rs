@@ -51,12 +51,32 @@ type IdT = i32;
 const SQUARE_SIZE: f32 = 10.0;
 
 #[derive(PartialEq, Debug)]
-pub struct Entity {
-    pub id  : IdT,
-    pub pos : Position,
-    pub vel : Velocity
+pub struct KinematicEntity {
+
 }
 
+pub enum TerrainType
+{
+    Grass,
+    Water,
+    Desert
+}
+
+// struct GameObject
+// {
+//     id  : IdT,
+//     entity : Entity
+// }
+
+pub enum Entity {
+    Kinematic {
+        pos : Position,
+        vel : Velocity
+    }
+    Animal {
+        pos: Position
+    }
+}
 
 pub struct World {
     entities: HashMap<IdT, Entity>,
@@ -64,6 +84,41 @@ pub struct World {
     pub camera: Camera,
     pub last_mouse_state: Option<(i32, i32)>,
     pub rng: rand::ThreadRng,
+}
+
+struct Biome {
+    pos: Vector2,
+    terrain: TerrainType
+}
+
+
+pub struct Shard {
+    pos: Vector2,
+    size: f32,
+    biomes: Vec<Biome>,
+    // objects: Vec<GameObject>
+}
+
+// fn row_col_to_ix(row: u32, col: u32) -> u32
+impl Shard {
+    fn create_image(&self, context: &mut Context, u16: image_size) -> GameResult<Image> {
+        let mut buffer = [0 a u8, 4*image_size*image_size];
+        for i in 0..image_size {
+            for j in 0..image_size {
+                let dist = ((i - image_size/2).pow(2) + (i - image_size/2).pow(2));
+                if dist <= self.size {
+                    let ix = i*image_size + j;
+                    let closest_biome = self.biomes.iter().max_by(|&b| (b.pos - pos).norm()*1000.0 as u32);
+                    match closest_biome {
+                        Biome(_, TerrainType::Grass)  => {buffer[ix..ix+4] = [0  , 255, 0  , 255]},
+                        Biome(_, TerrainType::Water)  => {buffer[ix..ix+4] = [0  , 0  , 255, 255]},
+                        Biome(_, TerrainType::Desert) => {buffer[ix..ix+4] = [255, 0  , 0  , 255]}
+                    }
+                }
+            }
+        }
+        Image::from_rgba8(context, image_size, image_size, &buffer)
+    }
 }
 
 impl World {
@@ -80,7 +135,20 @@ impl World {
         Ok(w)
     }
 
-    pub fn add_entity(&mut self, x: f32, y: f32, vx: f32, vy: f32) {
+    pub fn add_kinematic_entity(&mut self, x: f32, y: f32, vx: f32, vy: f32) {
+        self.entities.insert (
+            self.current_id,
+            Entity::Kinematic {
+                id: self.current_id,
+                pos: Vector2::new(x, y),
+                vel: Vector2::new(vx, vy)
+            }
+        );
+        self.current_id += 1;
+        println!("{:?}",  self.entities.len());
+    }
+
+    pub fn add_shard(&mut self) {
         self.entities.insert (
             self.current_id,
             Entity {
