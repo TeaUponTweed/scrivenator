@@ -1,5 +1,4 @@
 #![cfg_attr(feature="clippy", feature(plugin))]
-
 #![cfg_attr(feature="clippy", plugin(clippy))]
 
 extern crate froggy;
@@ -14,6 +13,10 @@ pub mod gamestate;
 use std::time::Duration;
 use std::f32;
 use std::f32::consts::{PI};
+use std::env;
+use std::path;
+use rand::distributions::{Range, IndependentSample};
+
 use ggez::conf;
 use ggez::{GameResult, Context};
 use ggez::graphics;
@@ -21,8 +24,6 @@ use ggez::graphics;
 // use ggez::event::{MouseState, EventHandler, Keycode, Mod, MouseButton};
 use ggez::timer;
 use ggez::event::*;
-
-use rand::distributions::{Range, IndependentSample};
 
 use gamestate::{World};
 
@@ -99,13 +100,19 @@ pub fn main() {
     c.window_title = "Astroblasto!".to_string();
     c.window_width = 640;
     c.window_height = 480;
+
     let ctx = &mut Context::load_from_conf("astroblasto", "ggez", c).unwrap();
-    // let state = &mut World::new(ctx);
-    // if let Err(e) = event::run(ctx, state) {
-    //     println!("Error encountered: {}", e);
-    // } else {
-    //     println!("Game exited cleanly.");
-    // }
+    // We add the CARGO_MANIFEST_DIR/resources do the filesystems paths so
+    // we we look in the cargo project for files.
+    if let Ok(manifest_dir) = env::var("CARGO_MANIFEST_DIR") {
+        let mut path = path::PathBuf::from(manifest_dir);
+        path.push("resources");
+        ctx.filesystem.mount(&path, true);
+        println!("Adding path {:?}", path);
+    } else {
+        println!("aie?");
+    }
+
     match World::new(ctx) {
         Err(e) => {
             println!("Could not load game!");

@@ -149,12 +149,31 @@ impl World {
     pub fn draw_squares(&self, ctx: &mut Context) -> GameResult<()> {
         // let win_width = (ctx.conf.window_width as f32) * self.camera.scale;
         // let win_height = (ctx.conf.window_height as f32) * self.camera.scale;
+        let circle_image = graphics::Image::new(ctx, "/circle.png").unwrap();
+        let mut spritebatch = graphics::spritebatch::SpriteBatch::new(circle_image);
+
         for e in self.entities.values() {
-            let (px, py) = self.camera.get_px_pos(e.pos[0], e.pos[1]);
-            let pxsize = (10.0/self.camera.scale).round() as u32;
-            let rect = graphics::Rect::new(px as f32, py as f32, pxsize as f32, pxsize as f32);
-            graphics::rectangle(ctx, graphics::DrawMode::Fill, rect)?;
+            // let (px, py) = self.camera.get_px_pos(e.pos[0], e.pos[1]);
+
+            let p = graphics::DrawParam {
+                dest: graphics::Point2::new(e.pos[0], e.pos[1]),
+                scale: graphics::Point2::new(self.camera.scale, self.camera.scale),
+                rotation: 0.0,
+                ..Default::default()
+            };
+            spritebatch.add(p);
         }
+        let param = graphics::DrawParam {
+            dest: graphics::Point2::new(0.0, 0.0),
+            scale: graphics::Point2::new(self.camera.scale, self.camera.scale),
+            rotation: 0.0,
+            offset: graphics::Point2::new(self.camera.x, self.camera.y),
+            ..Default::default()
+        };
+        graphics::draw_ex(ctx, &spritebatch, param)?;
+        spritebatch.clear();
+
+        graphics::present(ctx);
         Ok(())
     }
 }
