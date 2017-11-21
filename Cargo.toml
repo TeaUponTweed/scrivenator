@@ -14,4 +14,6 @@ nalgebra = "0.13.0"
 clippy = {version = "*", optional = true}
 
 [features]
-default = []
+# If this feature is enabled, it will add <cargo root dir>/resources/ to
+# the resource search path.
+cargo-resource-root = []
