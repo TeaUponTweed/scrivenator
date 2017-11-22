@@ -10,7 +10,7 @@ pub mod quadtree;
 pub mod camera;
 pub mod gamestate;
 
-use std::time::Duration;
+// use std::time::Duration;
 use std::f32;
 use std::f32::consts::{PI};
 use std::env;
@@ -47,7 +47,7 @@ impl EventHandler for World {
     fn draw(&mut self, ctx: &mut Context) -> GameResult<()> {
         graphics::clear(ctx);
         graphics::set_color(ctx, graphics::Color::new(1.0, 1.0, 1.0, 1.0))?;
-        self.draw_squares(ctx)?;
+        self.draw_entities(ctx)?;
         graphics::present(ctx);
         Ok(())
     }
